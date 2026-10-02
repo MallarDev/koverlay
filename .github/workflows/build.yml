@@ -13,8 +13,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install build and KDE runtime dependencies
         run: >-
-          dnf install -y cmake ninja-build gcc-c++ extra-cmake-modules
-          qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtwayland-devel
+          dnf install -y --setopt=install_weak_deps=False cmake ninja-build gcc-c++ extra-cmake-modules
+          qt6-qtbase-devel qt6-qtbase-private-devel qt6-qtdeclarative-devel qt6-qtwayland-devel
           layer-shell-qt-devel wayland-devel libxkbcommon-devel
           libksysguard kf6-kquickcharts ksystemstats
           xorg-x11-server-Xvfb xauth mesa-dri-drivers dbus-daemon rpm-build

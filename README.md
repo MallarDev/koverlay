@@ -59,7 +59,7 @@ On a regular Fedora installation, install:
 
 ```bash
 sudo dnf install cmake ninja-build gcc-c++ extra-cmake-modules \
-  qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtwayland-devel \
+  qt6-qtbase-devel qt6-qtbase-private-devel qt6-qtdeclarative-devel qt6-qtwayland-devel \
   layer-shell-qt-devel wayland-devel libxkbcommon-devel \
   libksysguard kf6-kquickcharts ksystemstats
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
@@ -156,7 +156,7 @@ Perfect for **sticky notes**, **cheat sheets**, **keybindings**, or any text you
 On **Fedora** (42+), install the runtime/build deps:
 
 ```bash
-sudo dnf install -y   qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtwayland-devel   layer-shell-qt-devel wayland-devel
+sudo dnf install -y   qt6-qtbase-devel qt6-qtbase-private-devel qt6-qtdeclarative-devel qt6-qtwayland-devel   layer-shell-qt-devel wayland-devel
 ```
 
 Runtime packages users typically need (automatically pulled by RPM):
