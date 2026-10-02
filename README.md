@@ -1,3 +1,107 @@
+# KOverlay — system monitor fork
+
+Fork of [erik96/koverlay](https://github.com/erik96/koverlay), adding a KDE 6 system-monitor HUD.
+The original text overlay is still available. The monitor uses **KQuickCharts** and
+**org.kde.ksysguard.sensors**, with the existing Wayland overlay layer and input transparency.
+
+## Start the monitor
+
+```bash
+./build/koverlay --monitor --show --screen-index 0
+```
+
+For a customized setup, use the supplied configuration without overwriting your current one:
+
+```bash
+KOVERLAY_CONFIG="$PWD/examples/monitor.ini" ./build/koverlay --show --screen-index 0
+```
+
+Default layout: CPU and GPU on the first row, RAM and VRAM on the second, swap and
+disk space on the third. Graphs show 60 seconds of history, a current value, and
+percentage or binary-capacity axes. Disk means **occupied space**, not I/O activity.
+GPU and disk defaults aggregate the devices exposed by KDE; override their sensor IDs
+if you want a specific device. This recreates a similar layout; it does not import your
+existing Plasma widgets or their settings.
+
+## Configuration
+
+Use `mode=monitor` in `[overlay]`, or force monitor mode with `--monitor`.
+The existing position, margin, text color, background opacity, screen-index and DBus
+visibility controls apply to both modes. `panelOpacity=0` removes the background.
+Edits to the configuration reload while running. `--monitor` takes precedence over
+`mode=text`; omit the flag to switch modes through the file.
+
+`[monitor]` options:
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `columns` | 2 | Grid columns (1–6) |
+| `chartWidth` | 260 | Width per chart, logical pixels (200–800) |
+| `chartHeight` | 130 | Height per chart, logical pixels (100–400) |
+| `fontSize` | 12 | Chart label size (9–24) |
+| `historySeconds` | 60 | History duration (10–3600 seconds) |
+| `updateInterval` | 1000 | Chart sampling interval (500–60000 ms) |
+
+Each of `cpu`, `gpu`, `ram`, `vram`, `swap` and `disk` also accepts `Enabled`, `Sensor`,
+`Label` and `Color` suffixes, for example `swapEnabled=false` or `diskLabel=SSD`.
+Use percentage sensors for CPU/GPU slots and byte-valued sensors for memory/disk slots.
+See [examples/monitor.ini](examples/monitor.ini) for the complete preset.
+
+The sampling interval controls the graph, not the systemstats daemon's collection rate.
+No history is invented before startup. Missing or stale sensors show **Unavailable**;
+zero-capacity swap shows **Not configured**. Hidden overlays unsubscribe from sensors
+and clear their history; history starts again when shown. Config changes that rebuild
+cards also restart their history.
+
+## Build on Fedora / Bazzite
+
+On a regular Fedora installation, install:
+
+```bash
+sudo dnf install cmake ninja-build gcc-c++ extra-cmake-modules \
+  qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtwayland-devel \
+  layer-shell-qt-devel wayland-devel libxkbcommon-devel \
+  libksysguard kf6-kquickcharts ksystemstats
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+cmake --build build --parallel 2
+```
+
+On Bazzite, compile in a Fedora Distrobox/Toolbox matching your host release, then run
+`build/koverlay` on the host in your KDE Wayland session. The host needs the Qt 6,
+LayerShellQt, libksysguard, KQuickCharts and ksystemstats runtime packages. Most are
+already part of KDE; check with `rpm -q layer-shell-qt qt6-qtdeclarative libksysguard
+kf6-kquickcharts ksystemstats`. Use Bazzite's host package mechanism for missing
+packages; do not run `dnf install` directly on its immutable host.
+
+The CI workflow builds on Fedora 43, runs configuration and QML tests against actual
+KDE modules, and produces an RPM artifact. Qt 5 versions of the KDE modules do not work.
+Other distributions need the equivalent Qt 6 / Plasma 6 packages.
+
+## Verification and limitations
+
+```bash
+cmake -S . -B build -DBUILD_TESTING=ON
+cmake --build build --parallel 2
+ctest --test-dir build --output-on-failure
+```
+
+Graph tests require a graphical display; CI uses Xvfb and Mesa. They cover bounded
+history, real zero values versus unavailable readings, memory scales, QML imports and
+layout construction. They do **not** replace a real KWin/Wayland smoke test:
+
+1. Run the monitor over a browser, then click and type through the charts.
+2. Check that opening/toggling the overlay never changes keyboard focus.
+3. Compare readings with Plasma System Monitor, especially GPU/VRAM and disk totals.
+4. Check the requested screen and fullscreen applications; secure/lock screens are
+   compositor-controlled and are not targets for this overlay.
+
+A missing QML module produces a visible dependency error and detailed terminal output.
+Unsupported GPU drivers or unavailable KDE sensors cannot be fixed by the overlay.
+
+---
+
+## Original project documentation
+
 <p align="center">
   <img src="assets/koverlay-banner-layers.svg" alt="KOverlay — Wayland Overlay" width="100%">
 </p>

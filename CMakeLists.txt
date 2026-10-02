@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 # ---- Project ----
-project(koverlay VERSION 1.0.1 LANGUAGES CXX)
+project(koverlay VERSION 1.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -11,6 +11,8 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # ---- Deps ----
+find_package(ECM 6.0 REQUIRED NO_MODULE)
+list(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets WaylandClient DBus Qml Quick)
 find_package(LayerShellQt REQUIRED)
 find_package(Wayland REQUIRED COMPONENTS Client)
@@ -25,6 +27,7 @@ add_executable(koverlay
         src/overlay_adaptor.cpp
         src/resources.qrc
         src/Position.h
+        src/monitor_settings.h
 )
 
 target_link_libraries(koverlay PRIVATE
@@ -59,7 +62,7 @@ set(CPACK_GENERATOR "RPM")
 set(CPACK_PACKAGE_NAME "koverlay")
 set(CPACK_PACKAGE_VENDOR "koverlay")
 set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Click-through keybindings overlay for KDE Wayland")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Click-through text and system-monitor overlay for KDE Wayland")
 set(CPACK_RPM_PACKAGE_LICENSE "MIT")
 set(CPACK_RPM_PACKAGE_GROUP "Applications/Utilities")
 
@@ -68,6 +71,20 @@ set(CPACK_RPM_PACKAGE_AUTOREQPROV ON)
 
 # Also add human-friendly meta packages users should have
 set(CPACK_RPM_PACKAGE_REQUIRES
-        "layer-shell-qt, qt6-qtbase, qt6-qtdeclarative, qt6-qtwayland")
+        "layer-shell-qt, qt6-qtbase, qt6-qtdeclarative, qt6-qtwayland, libksysguard, kf6-kquickcharts, ksystemstats")
 
 include(CPack)
+
+include(CTest)
+if(BUILD_TESTING)
+    find_package(Qt6 REQUIRED COMPONENTS Test QuickTest)
+    add_executable(settings_test tests/settings_test.cpp src/overlay_config.h src/monitor_settings.h)
+    target_include_directories(settings_test PRIVATE src)
+    target_link_libraries(settings_test PRIVATE Qt6::Test Qt6::Gui)
+    add_test(NAME settings COMMAND settings_test)
+
+    add_executable(charts_test tests/charts_test.cpp src/overlay_config.h)
+    target_include_directories(charts_test PRIVATE src)
+    target_link_libraries(charts_test PRIVATE Qt6::QuickTest Qt6::Quick)
+    add_test(NAME charts COMMAND charts_test -input ${CMAKE_CURRENT_SOURCE_DIR}/tests/qml)
+endif()

@@ -2,5 +2,9 @@
     <qresource prefix="/koverlay">
         <!-- Path is relative to this .qrc file's directory -->
         <file>Overlay.qml</file>
+        <file>TextOverlay.qml</file>
+        <file>MonitorOverlay.qml</file>
+        <file>SensorCard.qml</file>
+        <file>ChartCard.qml</file>
     </qresource>
 </RCC>

@@ -1,9 +1,12 @@
 #pragma once
 #include <QObject>
 #include <QString>
+#include <QVariantMap>
 
 class OverlayConfig : public QObject {
     Q_OBJECT
+    Q_PROPERTY(bool monitorMode READ monitorMode WRITE setMonitorMode NOTIFY monitorModeChanged)
+    Q_PROPERTY(QVariantMap monitor READ monitor WRITE setMonitor NOTIFY monitorChanged)
     Q_PROPERTY(QString text READ text WRITE setText NOTIFY textChanged)
     Q_PROPERTY(QString textFile READ textFile WRITE setTextFile NOTIFY textFileChanged)
     Q_PROPERTY(QString fontFamily READ fontFamily WRITE setFontFamily NOTIFY fontFamilyChanged)
@@ -22,6 +25,18 @@ class OverlayConfig : public QObject {
     Q_PROPERTY(int x READ x WRITE setX NOTIFY positionChanged) // custom only
     Q_PROPERTY(int y READ y WRITE setY NOTIFY positionChanged) // custom only
 public:
+    bool monitorMode() const { return monitorMode_; }
+    void setMonitorMode(bool value) {
+        if (monitorMode_ == value) return;
+        monitorMode_ = value;
+        emit monitorModeChanged();
+    }
+    QVariantMap monitor() const { return monitor_; }
+    void setMonitor(const QVariantMap &value) {
+        if (monitor_ == value) return;
+        monitor_ = value;
+        emit monitorChanged();
+    }
     explicit OverlayConfig(QObject *parent = nullptr) : QObject(parent) {
     }
 
@@ -143,6 +158,8 @@ public:
     }
 
 signals:
+    void monitorModeChanged();
+    void monitorChanged();
     void textChanged();
 
     void textFileChanged();
@@ -160,6 +177,8 @@ signals:
     void positionChanged();
 
 private:
+    bool monitorMode_ = false;
+    QVariantMap monitor_;
     // text
     QString text_;
     QString textFile_;

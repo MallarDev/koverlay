@@ -1,14 +1,15 @@
 Name:           koverlay
-Version:        1.0.1
+Version:        1.1.0
 Release:        1%{?dist}
 Summary:        Click-through overlay for Wayland (Qt 6 + LayerShellQt)
 
 License:        MIT
-URL:            https://github.com/erx/koverlay
+URL:            https://github.com/MallarDev/koverlay
 # Point to a release tarball or use git archive (see below)
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  cmake
+BuildRequires:  extra-cmake-modules
 BuildRequires:  gcc-c++
 BuildRequires:  make
 BuildRequires:  qt6-qtbase-devel
@@ -23,10 +24,14 @@ Requires:       layer-shell-qt
 Requires:       qt6-qtbase
 Requires:       qt6-qtdeclarative
 Requires:       qt6-qtwayland
+Requires:       libksysguard
+Requires:       kf6-kquickcharts
+Requires:       ksystemstats
 
 %description
 KOverlay is a click-through, always-on-top overlay for KDE/Wayland (Qt 6 + QML + LayerShellQt).
 Useful for sticky notes, cheat sheets, and keybindings. Supports hot-reloading config.
+Includes CPU, GPU, memory and disk history charts backed by KDE sensors.
 
 %prep
 %autosetup -n %{name}-%{version}

@@ -15,10 +15,12 @@ OverlayView::OverlayView(OverlayConfig *cfg, QWindow *parent)
     setColor(Qt::transparent);
     setFlags(Qt::FramelessWindowHint);
     setFlag(Qt::WindowTransparentForInput, true);
+    setFlag(Qt::WindowDoesNotAcceptFocus, true);
     setResizeMode(QQuickView::SizeRootObjectToView);
 
     // expose config to QML
     rootContext()->setContextProperty(QStringLiteral("cfg"), cfg_);
+    rootContext()->setContextProperty(QStringLiteral("overlayWindow"), this);
 
     // layer-shell setup
     auto *ls = LayerShellQt::Window::get(this);
@@ -53,7 +55,6 @@ void OverlayView::showOverlay() {
     // LayerShell will position the content-sized window according to anchors/margins.
     show();
     raise();
-    requestActivate();
     applyEmptyInputRegion();
 }
 

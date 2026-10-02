@@ -15,6 +15,7 @@
 #include "overlay_view.h"
 #include "overlay_adaptor.h"
 #include "Position.h"
+#include "monitor_settings.h"
 
 // ---------- Defaults ----------
 static QString defaultOverlayText() {
@@ -159,7 +160,10 @@ static OverlayPosition readOverlayPositionFromIni(const QString &path) {
 
 // --------------------------------------------------------------------------
 
-static void loadSettingsInto(const QString &path, OverlayConfig *oc) {
+static void loadSettingsInto(const QString &path, OverlayConfig *oc, bool forceMonitor = false) {
+    QSettings monitorSettings(path, QSettings::IniFormat);
+    oc->setMonitor(readMonitorSettings(monitorSettings));
+    oc->setMonitorMode(forceMonitor || monitorSettings.value("overlay/mode", "text").toString() == "monitor");
     QString text = defaultOverlayText();
     QString family;
     int size = 28;
@@ -260,11 +264,14 @@ int main(int argc, char **argv) {
     QCommandLineOption screenIdxOpt(QStringList{"S", "screen-index"}, "Screen index (0..N-1)", "index", "0");
     parser.addOption(showOpt);
     parser.addOption(screenIdxOpt);
+    QCommandLineOption monitorOpt("monitor", "Show KDE system sensor charts instead of text.");
+    parser.addOption(monitorOpt);
     parser.process(app);
 
     auto *cfg = new OverlayConfig(&app);
     const QString cfgPath = resolveConfigPath();
-    loadSettingsInto(cfgPath, cfg);
+    const bool forceMonitor = parser.isSet(monitorOpt);
+    loadSettingsInto(cfgPath, cfg, forceMonitor);
 
     OverlayView view(cfg);
     view.selectScreenByIndex(parser.value(screenIdxOpt).toInt());
@@ -332,9 +339,9 @@ int main(int argc, char **argv) {
 
     if (parser.isSet(showOpt)) view.showOverlay(); else view.hide();
     QObject::connect(&watcher, &QFileSystemWatcher::fileChanged, &app,
-                     [cfgPath, cfg, &watcher, &view, &currentTextFile, &rewatchTextFile]() {
+                     [cfgPath, cfg, forceMonitor, &watcher, &view, &currentTextFile, &rewatchTextFile]() {
                          if (!watcher.files().contains(cfgPath) && QFile::exists(cfgPath)) watcher.addPath(cfgPath);
-                         loadSettingsInto(cfgPath, cfg);
+                         loadSettingsInto(cfgPath, cfg, forceMonitor);
                          // re-apply position on INI changes
                          OverlayPosition pos = readOverlayPositionFromIni(cfgPath);
                          applyOverlayPosition(&view, pos);

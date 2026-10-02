@@ -1,0 +1,35 @@
+name: Build and test KDE overlay
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fedora:
+    runs-on: ubuntu-latest
+    container: fedora:43
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build and KDE runtime dependencies
+        run: >-
+          dnf install -y cmake ninja-build gcc-c++ extra-cmake-modules
+          qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtwayland-devel
+          layer-shell-qt-devel wayland-devel libxkbcommon-devel
+          libksysguard kf6-kquickcharts ksystemstats
+          xorg-x11-server-Xvfb xauth mesa-dri-drivers dbus-daemon rpm-build
+      - name: Configure and compile
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+          cmake --build build --parallel 2
+      - name: Test configuration, QML imports, history and layouts
+        run: >-
+          dbus-run-session -- xvfb-run -a env
+          QT_QPA_PLATFORM=xcb QSG_RHI_BACKEND=opengl LIBGL_ALWAYS_SOFTWARE=1
+          ctest --test-dir build --output-on-failure
+      - name: Package RPM
+        run: cd build && cpack -G RPM
+      - uses: actions/upload-artifact@v4
+        with:
+          name: koverlay-fedora43-rpm
+          path: build/*.rpm
