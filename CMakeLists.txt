@@ -31,6 +31,7 @@ add_executable(koverlay
         src/resources.qrc
         src/Position.h
         src/monitor_settings.h
+        src/single_instance.h
 )
 
 target_link_libraries(koverlay PRIVATE
@@ -81,6 +82,12 @@ include(CPack)
 include(CTest)
 if(BUILD_TESTING)
     find_package(Qt6 REQUIRED COMPONENTS Test QuickTest)
+    add_executable(single_instance_test tests/single_instance_test.cpp src/single_instance.h)
+    target_include_directories(single_instance_test PRIVATE src)
+    target_link_libraries(single_instance_test PRIVATE Qt6::Test Qt6::DBus)
+    find_program(DBUS_RUN_SESSION dbus-run-session REQUIRED)
+    add_test(NAME single_instance COMMAND ${DBUS_RUN_SESSION} -- $<TARGET_FILE:single_instance_test>)
+
     add_executable(settings_test tests/settings_test.cpp src/overlay_config.h src/monitor_settings.h)
     target_include_directories(settings_test PRIVATE src)
     target_link_libraries(settings_test PRIVATE Qt6::Test Qt6::Gui)

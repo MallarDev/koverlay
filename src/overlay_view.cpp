@@ -51,6 +51,8 @@ void OverlayView::selectScreenByIndex(int idx) {
 void OverlayView::toggle() { setVisible(!isVisible()); }
 
 void OverlayView::showOverlay() {
+    if (isVisible()) return;
+
     // Do NOT make the window fullscreen or set it to screen geometry here.
     // LayerShell will position the content-sized window according to anchors/margins.
     show();

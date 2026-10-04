@@ -25,6 +25,17 @@ existing Plasma widgets or their settings.
 
 ## Configuration
 
+Only one KOverlay instance runs per user D-Bus session. Launching it again shows
+the existing overlay if hidden and does nothing if it is already visible, even
+without `--show`. The second process exits without creating another window or
+changing the first instance's configuration, monitor mode, screen, or chart history.
+The first launch still uses `--show` to start visible. D-Bus must be available;
+registration or activation failures are reported instead of creating an extra overlay.
+
+After upgrading from a version without this guard, quit all old KOverlay processes
+once before starting the new binary. Existing D-Bus Toggle/Show/Hide shortcuts
+continue to work.
+
 Use `mode=monitor` in `[overlay]`, or force monitor mode with `--monitor`.
 The existing position, margin, text color, background opacity, screen-index and DBus
 visibility controls apply to both modes. `panelOpacity=0` removes the background.
