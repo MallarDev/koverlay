@@ -16,6 +16,7 @@
 #include "overlay_adaptor.h"
 #include "Position.h"
 #include "monitor_settings.h"
+#include "single_instance.h"
 
 // ---------- Defaults ----------
 static QString defaultOverlayText() {
@@ -268,6 +269,13 @@ int main(int argc, char **argv) {
     parser.addOption(monitorOpt);
     parser.process(app);
 
+    QDBusConnection session = QDBusConnection::sessionBus();
+    const auto instance = SingleInstance::acquireOrShow(session);
+    if (instance != SingleInstance::Result::Primary)
+        return instance == SingleInstance::Result::Activated ? 0 : 1;
+
+    app.setQuitOnLastWindowClosed(false);
+
     auto *cfg = new OverlayConfig(&app);
     const QString cfgPath = resolveConfigPath();
     const bool forceMonitor = parser.isSet(monitorOpt);
@@ -362,10 +370,11 @@ int main(int argc, char **argv) {
                      });
 
 
-    QDBusConnection session = QDBusConnection::sessionBus();
-    session.registerService("org.erx.KOverlay");
-    session.registerObject("/Overlay", &view);
     new OverlayAdaptor(&view);
+    if (!session.registerObject(SingleInstance::path, &view, QDBusConnection::ExportAdaptors)) {
+        qCritical() << "koverlay: cannot export D-Bus controls:" << session.lastError().message();
+        return 1;
+    }
 
     return QApplication::exec();
 }
