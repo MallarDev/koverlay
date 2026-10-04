@@ -6,6 +6,8 @@
 #include <QDBusMessage>
 #include <QDBusReply>
 #include <QDebug>
+#include <QElapsedTimer>
+#include <QThread>
 
 namespace SingleInstance {
 inline constexpr auto service = "org.erx.KOverlay";
@@ -30,14 +32,29 @@ inline Result acquireOrShow(const QDBusConnection &session) {
     if (registration.value() == QDBusConnectionInterface::ServiceRegistered)
         return Result::Primary;
 
-    // Avoid introspection: the owner may still be initializing its overlay.
-    // The call is dispatched when its event loop starts, after object registration.
-    const auto request = QDBusMessage::createMethodCall(service, path, service, "Show");
-    const auto reply = session.call(request, QDBus::Block, 10000);
-    if (reply.type() == QDBusMessage::ErrorMessage) {
+    // Pin activation to this owner, even if it exits during startup.
+    const auto owner = session.interface()->serviceOwner(service);
+    if (!owner.isValid()) {
+        qCritical() << "koverlay: cannot find the existing instance:" << owner.error().message();
+        return Result::Error;
+    }
+    const auto request = QDBusMessage::createMethodCall(owner.value(), path, service, "Show");
+    QElapsedTimer timer;
+    timer.start();
+    while (true) {
+        const auto reply = session.call(request, QDBus::Block, 5000);
+        if (reply.type() != QDBusMessage::ErrorMessage)
+            return Result::Activated;
+
+        // Qt's D-Bus thread can reject calls before the window is exported.
+        const auto error = QDBusError(reply).type();
+        if ((error == QDBusError::UnknownObject || error == QDBusError::UnknownMethod)
+            && timer.elapsed() < 5000) {
+            QThread::msleep(50);
+            continue;
+        }
         qCritical() << "koverlay: cannot show the existing instance:" << reply.errorMessage();
         return Result::Error;
     }
-    return Result::Activated;
 }
 }
